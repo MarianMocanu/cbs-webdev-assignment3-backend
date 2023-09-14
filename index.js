@@ -1,14 +1,14 @@
 const app = require("express")();
-const port = 3000;
 const { connectToDatabase, closeDatabaseConnection, db } = require("./database");
+const port = 3000;
 const bodyParser = require("body-parser");
 
 app.use(bodyParser.json());
 
 app.get("/", async (req, res) => {
   try {
-    const cities = await db.collection("cities").find().toArray();
-    res.status(200).json({ cities });
+    const destinations = await db.collection("destinations").find().toArray();
+    res.status(200).json({ destinations });
   } catch (error) {
     console.error("Error reading collection", error);
     res.status(500).json({ error: "Internal server error occured" });
@@ -17,17 +17,12 @@ app.get("/", async (req, res) => {
 
 app.post("/", async (req, res) => {
   try {
-    if (!req.body.name || !req.body.country || !req.body.description || req.body.rating === undefined) {
+    if (!req.body.title || !req.body.country || !req.body.link) {
       res.status(400).json({ error: "Missing required fields" });
       return;
     } else {
-      const newDestination = {
-        name: req.body.name,
-        country: req.body.country,
-        description: req.body.description,
-        rating: req.body.rating,
-      };
-      const result = await db.collection("cities").insertOne(newDestination);
+      const newDestination = req.body;
+      const result = await db.collection("destinations").insertOne(newDestination);
       res.status(201).json({ message: "Document added sucessfully", insertedId: result.insertedId });
     }
   } catch (error) {
