@@ -10,6 +10,7 @@ app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.json());
 
 app.get("/travel-destinations", async (req, res) => {
+  res.setHeader("Content-Type", "application/javascript");
   try {
     const destinations = await db.collection("destinations").find().toArray();
     res.status(200).json(destinations);
@@ -20,6 +21,7 @@ app.get("/travel-destinations", async (req, res) => {
 });
 
 app.post("/travel-destination", async (req, res) => {
+  res.setHeader("Content-Type", "application/javascript");
   try {
     if (!req.body.title || !req.body.country) {
       res.status(400).json({ error: "Missing required fields" });
