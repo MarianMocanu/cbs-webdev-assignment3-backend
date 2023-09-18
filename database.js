@@ -23,4 +23,4 @@ const closeDatabaseConnection = async () => {
 
 const db = client.db();
 
-module.exports = { connectToDatabase, closeDatabaseConnection, db  };
+module.exports = { connectToDatabase, closeDatabaseConnection, db };
