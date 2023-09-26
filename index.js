@@ -9,6 +9,7 @@ const port = 3000;
 app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 app.use(express.json());
 
+// get all travel destinations
 app.get("/travel-destinations", async (req, res) => {
   res.setHeader("Content-Type", "application/javascript");
   try {
@@ -20,12 +21,12 @@ app.get("/travel-destinations", async (req, res) => {
   }
 });
 
-app.post("/travel-destination", async (req, res) => {
+// create a travel destination
+app.post("/travel-destinations", async (req, res) => {
   res.setHeader("Content-Type", "application/javascript");
   try {
     if (!req.body.title || !req.body.country) {
       res.status(400).json({ error: "Missing required fields" });
-      return;
     } else {
       const newDestination = req.body;
       const result = await db.collection("destinations").insertOne(newDestination);
@@ -34,6 +35,18 @@ app.post("/travel-destination", async (req, res) => {
     }
   } catch (error) {
     console.error("Error adding document", error);
+    res.status(500).json({ error: "Internal server error occured" });
+  }
+});
+
+// update a travel destination
+app.put("/travel-destination/:id", async (req, res) => {
+  res.setHeader("Content-Type", "application/javascript");
+  try {
+    const result = await db.collection("destinations").findOne({ _id: ObjectId(req.params.id) });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error updating document", error);
     res.status(500).json({ error: "Internal server error occured" });
   }
 });
