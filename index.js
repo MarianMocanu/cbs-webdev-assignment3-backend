@@ -2,6 +2,7 @@ const express = require("express");
 const { connectToDatabase, closeDatabaseConnection, db } = require("./database");
 const { ObjectId } = require("mongodb");
 const cors = require("cors");
+const TravelDestination = require("./models/TravelDestination");
 
 const app = express();
 const port = 3000;
@@ -19,8 +20,8 @@ const notDeletedFilter = {
 // get all travel destinations
 app.get("/travel-destinations", async (req, res) => {
   try {
-    const destinations = await db.collection("destinations").find(notDeletedFilter).toArray();
-    res.status(200).json(destinations);
+    const foundDestinations = await TravelDestination.find(notDeletedFilter);
+    res.status(200).json(foundDestinations);
   } catch (error) {
     console.error("Error reading collection", error);
     res.status(500).json({ error: "Internal server error occured" });
@@ -29,9 +30,8 @@ app.get("/travel-destinations", async (req, res) => {
 
 // get a specific travel destination
 app.get("/travel-destinations/:id", async (req, res) => {
-  const filter = { _id: new ObjectId(req.params.id), ...notDeletedFilter };
   try {
-    const foundDestination = await db.collection("destinations").findOne(filter);
+    const foundDestination = await TravelDestination.findById(req.params.id).where(notDeletedFilter);
     if (foundDestination) {
       res.status(200).json(foundDestination);
     } else {
@@ -49,11 +49,9 @@ app.post("/travel-destinations", async (req, res) => {
     if (!req.body.title || !req.body.country) {
       res.status(400).json({ error: "Missing required fields" });
     } else {
-      const newDestination = req.body;
-      const result = await db.collection("destinations").insertOne(newDestination);
-      const filter = { _id: new ObjectId(result.insertedId) };
-      const foundDestination = await db.collection("destinations").findOne(filter);
-      res.status(201).json(foundDestination);
+      const newDestination = new TravelDestination(req.body);
+      const result = await newDestination.save();
+      res.status(201).json(result);
     }
   } catch (error) {
     console.error("Error adding document", error);
@@ -63,11 +61,11 @@ app.post("/travel-destinations", async (req, res) => {
 
 // update a specific travel destination
 app.put("/travel-destinations/:id", async (req, res) => {
-  const filter = { _id: new ObjectId(req.params.id), ...notDeletedFilter };
+  const filter = { _id: new ObjectId(req.params.id) };
   try {
-    const foundDestination = await db.collection("destinations").findOne(filter);
-    const updatedDestination = { ...foundDestination, ...req.body };
-    const result = await db.collection("destinations").replaceOne(filter, updatedDestination);
+    const foundDestination = await TravelDestination.findById(req.params.id).where(notDeletedFilter);
+    const updatedDestination = { ...foundDestination.toObject(), ...req.body };
+    const result = await TravelDestination.replaceOne(filter, updatedDestination);
 
     // FIXME: improve success condition ???
     if (result.modifiedCount === 1) {
@@ -88,7 +86,7 @@ app.delete("/travel-destinations/:id", async (req, res) => {
   const filter = { _id: new ObjectId(req.params.id) };
   const update = { $set: { deleted: true } };
   try {
-    const result = await db.collection("destinations").updateOne(filter, update);
+    const result = await TravelDestination.updateOne(filter, update);
     if (result.modifiedCount === 1) {
       res.status(200).json({ deletedId: req.params.id });
     } else if (result.matchedCount === 0) {
