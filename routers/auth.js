@@ -1,8 +1,8 @@
 const router = require("express").Router();
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const User = require("../models/User");
+const validateToken = require("../middlewares/validateToken");
 
 router.post("/signup", async (req, res) => {
   const user = new User({
@@ -27,9 +27,23 @@ router.post("/login", async (req, res) => {
   try {
     const foundUser = await User.findOne().where({ email });
     if (foundUser && foundUser.comparePassword(req.body.password)) {
-      res.status(200).json({ token: jwt.sign({ foundUser }, process.env.jwt_secret) });
+      res.status(200).json({ token: jwt.sign({ id: foundUser._id }, process.env.jwt_secret) });
     } else {
       res.status(400).json({ error: "Invalid credentials" });
+    }
+  } catch (error) {
+    console.error("Error user login", error);
+    res.status(500).json({ error: "Internal server error occured" });
+  }
+});
+
+router.get("/logedinUser", validateToken, async (req, res) => {
+  try {
+    const foundUser = await User.findById(req.user.id);
+    if (foundUser) {
+      res.status(200).json({ id: foundUser._id, name: foundUser.name, email: foundUser.email });
+    } else {
+      res.status(400).json({ error: "Invalid token" });
     }
   } catch (error) {
     console.error("Error user login", error);
