@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const { ObjectId } = require("mongodb");
 
 const TravelDestination = require("../models/TravelDestination");
 const validateToken = require("../middlewares/validateToken");
@@ -55,17 +56,11 @@ router.post("/", async (req, res) => {
 // update a specific travel destination
 router.put("/:id", async (req, res) => {
   try {
-    const foundDestination = await TravelDestination.findById(req.params.id).where(notDeletedFilter);
-    const updatedDestination = { ...foundDestination.toObject(), ...req.body };
-    const result = await TravelDestination.findByIdAndUpdate(req.params.id, updatedDestination);
-
-    // FIXME: improve success condition ???
+    const result = await TravelDestination.updateOne({ _id: new ObjectId(req.params.id) }, req.body);
     if (result.modifiedCount === 1) {
-      res.status(200).json(updatedDestination);
-    } else if (result.matchedCount === 0) {
-      res.status(404).json({ error: "No document matched the query, so no update occured" });
+      res.status(200).json(result);
     } else {
-      res.status(200).json({ response: "Update did not occur or had no effect" });
+      res.status(404).json({ error: "No document matched the query, so no update occured" });
     }
   } catch (error) {
     console.error("Error updating document", error);

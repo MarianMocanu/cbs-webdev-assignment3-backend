@@ -26,7 +26,7 @@ router.post("/login", async (req, res) => {
   const email = req.body.email.trim();
   try {
     const foundUser = await User.findOne().where({ email });
-    if (foundUser && foundUser.comparePassword(req.body.password)) {
+    if (foundUser && (await foundUser.comparePassword(req.body.password))) {
       res.status(200).json({ token: jwt.sign({ id: foundUser._id }, process.env.jwt_secret) });
     } else {
       res.status(400).json({ error: "Invalid credentials" });
